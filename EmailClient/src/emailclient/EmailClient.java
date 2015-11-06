@@ -1,6 +1,6 @@
 package emailclient;
+import java.util.ArrayList;
 import java.util.Arrays;
-
 import java.util.Collections;
 import java.util.Properties;
 
@@ -103,7 +103,7 @@ public class EmailClient
 	 * @return
 	 */
 	
-	public Message[] getInbox()
+	public ArrayList<Message> getInbox()
 	{
 		folder = null;
 		store = null;
@@ -128,8 +128,9 @@ public class EmailClient
 		}
 		
 		//reverse message array so that they are output in date order
-		Collections.reverse(Arrays.asList(messages));
-		return messages;
+		ArrayList<Message> outputMessages = new ArrayList<Message>(Arrays.asList(messages));
+		Collections.reverse(outputMessages);
+		return outputMessages;
 	}
 	
 	public void close()
