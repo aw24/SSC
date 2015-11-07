@@ -26,6 +26,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 import javax.swing.SwingConstants;
@@ -75,7 +76,60 @@ public class EmailMain {
 		frmEmailClient.setLocationRelativeTo(null);
 	}
 
+	public ArrayList<Message> search(ArrayList<Message> messages, String searchterm)
+	{
+		ArrayList<Message> found = new ArrayList<Message>();
+		System.out.println("Searching...");
+		for(int i = 0; i < messages.size(); i++)
+		{
+			Message current = messages.get(i);
+			try {
+				if(current.getSubject().toLowerCase().contains((searchterm).toLowerCase()) || getEmailBody(current).toLowerCase().contains(searchterm.toLowerCase()))
+				{
+					found.add(current);
+					System.out.println("Found a match!");
+				}
+			} catch (MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return found;
+	}
 	
+	public ArrayList<Message> sort(ArrayList<Message> messages)
+	{
+		try
+		{
+			if(messages.size() > 1)
+			{
+				for(int i = 0; i < messages.size(); i++)
+				{
+					for(int j = 0; j < messages.size()-1; j++)
+					{
+						if(messages.get(j).getReceivedDate().before(messages.get(j+1).getReceivedDate()))
+						{
+							Collections.swap(messages, j, j+1);
+						}
+					}
+				}
+			}
+		}
+		catch
+		(MessagingException e)
+		{
+			
+		}
+		return messages;
+	}
+	
+	public void displaySearchedMessages(String searchword)
+	{
+		ArrayList<Message> found = search(displayedMessages, searchword);
+		found = sort(found);
+		reproduceTable(found);
+		
+	}
 	
 	public void displayMessages(Flag flag, boolean selected, boolean negation)
 	{
@@ -149,13 +203,19 @@ public class EmailMain {
 			hiddenMessages = toBeLeftOut;
 		}
 
+		toGoInTable = sort(toGoInTable);
+		reproduceTable(toGoInTable);
+	}
+	
+	public void reproduceTable(ArrayList<Message> emails)
+	{
 		//recreate the table with the new input messages
 		mainPanel.remove(1);
-		JTable table = createTable(toGoInTable);
+		JTable table = createTable(emails);
 		JScrollPane scrollPane2 = new JScrollPane(table);
 		mainPanel.add(scrollPane2);
 		mainPanel.revalidate();
-		mainPanel.repaint();		
+		mainPanel.repaint();	
 	}
 	
 	public JLabel align(JLabel label)
@@ -225,37 +285,22 @@ public class EmailMain {
 				if(e.getClickCount() ==2) {
 					//get the email subject of the row that was clicked
 					String messageSubject = (String) table.getModel().getValueAt(row,1);
+					System.out.println(messageSubject);
 					Date messageDate = (Date) table.getModel().getValueAt(row,0);
+					System.out.println(messageDate.toString());
 					for(int i = 0; i < messages.size(); i++)
 					{
 						Message current = messages.get(i);
 						try {
 							//find the email which contained the date and subject that was in the table
-							if(current.getSubject().equals(messageSubject) && current.getSentDate().equals(messageDate))
+							if(current.getSubject().equals(messageSubject) && current.getReceivedDate().equals(messageDate))
 							{
-								//get content of email
-								String content = "";
-								if(current.getContentType().contains("TEXT/PLAIN")) 
-								{
-									content = current.getContent().toString();
-								}
-								else 
-								{
-									Multipart multipart = (Multipart) current.getContent();
-									for (int j = 0; j < multipart.getCount(); j++) {
-										BodyPart bodyPart = multipart.getBodyPart(j);
-										//display parts of the email which are text
-										if(bodyPart.getContentType().contains("TEXT/PLAIN")) 
-										{
-											content = bodyPart.getContent().toString();
-										}
-
-									}
-								}
+								System.out.println("Found");
+								String content = getEmailBody(current);
 								MessageDisplay display = new MessageDisplay(current.getSubject(), current.getFrom(), current.getRecipients(RecipientType.TO),current.getRecipients(RecipientType.CC), content);
 								break;
 							}
-						} catch (MessagingException | IOException e1) {
+						} catch (MessagingException e1) {
 							e1.printStackTrace();
 						}
 						
@@ -265,6 +310,35 @@ public class EmailMain {
 		});
 
 		return table;	
+	}
+	
+	public String getEmailBody(Message current)
+	{
+		//get content of email
+		String content = "";
+		try {
+			if(current.getContentType().contains("TEXT/PLAIN")) 
+			{
+				content = current.getContent().toString();
+			}
+			else 
+			{
+				Multipart multipart = (Multipart) current.getContent();
+				for (int j = 0; j < multipart.getCount(); j++) {
+					BodyPart bodyPart = multipart.getBodyPart(j);
+					//display parts of the email which are text
+					if(bodyPart.getContentType().contains("TEXT/PLAIN")) 
+					{
+						content = bodyPart.getContent().toString();
+					}
+
+				}
+			}
+		} catch (MessagingException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return content;
 	}
 	
 	/**
@@ -313,6 +387,16 @@ public class EmailMain {
 		gbc_textField.anchor = GridBagConstraints.WEST;
 		gbc_textField.insets = new Insets(10, 0, 5, 5);
 		gbc_textField.gridx = 3;
+		textField.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					displaySearchedMessages(textField.getText());	
+				}
+				
+			}
+		);
 		gbc_textField.gridy = 0;
 		topPanel.add(textField, gbc_textField);
 		
