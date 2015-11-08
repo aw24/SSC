@@ -120,12 +120,6 @@ public class EmailMain {
 		return found;
 	}
 	
-	/**
-	 * Sort the current inbox so that the most recent message are at the top 
-	 * @param messages The messages currently in the inbox.
-	 * @return
-	 */
-	
 	public ArrayList<Message> sort(ArrayList<Message> messages)
 	{
 		try
@@ -152,24 +146,13 @@ public class EmailMain {
 		return messages;
 	}
 	
-	/**
-	 * Displays the messages that returned a match for the keyword entered by the user
-	 * @param searchword The keyword entered into the textfield by the user
-	 */
-	
 	public void displaySearchedMessages(String searchword)
 	{
 		ArrayList<Message> found = search(displayedMessages, searchword);
 		found = sort(found);
-		reproduceTable(found);	
+		reproduceTable(found);
+		
 	}
-	
-	/**
-	 * When a checkbox has been ticked, this method calculates which messages should be displayed.
-	 * @param flag The flag that the checkbox is referring to. e.g. The read checkbox refers to Flags.Flag.SEEN 
-	 * @param selected A boolean to show if the checkbox is selected or not
-	 * @param negation A boolean that shows if the checkbox needs the flag to be applied or not
-	 */
 	
 	public void displayMessages(Flag flag, boolean selected, boolean negation)
 	{
@@ -247,11 +230,6 @@ public class EmailMain {
 		reproduceTable(toGoInTable);
 	}
 	
-	/**
-	 * Removes the current JTable and adds the new one
-	 * @param emails The new email list
-	 */
-	
 	public void reproduceTable(ArrayList<Message> emails)
 	{
 		//recreate the table with the new input messages
@@ -269,12 +247,6 @@ public class EmailMain {
 		return label;
 		
 	}
-	
-	/**
-	 * Inserts the values from the messages into the table
-	 * @param messages The list of messages to go into the table
-	 * @return
-	 */
 	
 	public JTable constructTable(ArrayList<Message> messages)
 	{
@@ -322,12 +294,6 @@ public class EmailMain {
 		return table;
 	}
 	
-	/**
-	 * Adds the listeners to the table rows in the new JTable so that the message row that is clicked causes the message to be displayed in a new frame
-	 * @param messages The messages that are in the table
-	 * @return
-	 */
-	
 	public JTable createTable(ArrayList<Message> messages)
 	{
 		JTable table = constructTable(messages);
@@ -369,11 +335,6 @@ public class EmailMain {
 		return table;	
 	}
 	
-	/**
-	 * Gets the body content of the email
-	 * @param current The email of which you want to get the body content of
-	 * @return
-	 */
 	public String getEmailBody(Message current)
 	{
 		//get content of email
@@ -404,7 +365,7 @@ public class EmailMain {
 	}
 	
 	/**
-	 * Actually creates the GUI
+	 * Initialize the contents of the frame.
 	 */
 	private void create()
 	{		
