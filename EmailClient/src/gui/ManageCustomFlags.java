@@ -134,11 +134,18 @@ public class ManageCustomFlags {
 				{
 					DefaultTableModel model = (DefaultTableModel) table.getModel();
 					int row = table.getSelectedRow();
-					String flagName = (String) table.getModel().getValueAt(row, 0);
-					model.removeRow(table.convertRowIndexToModel(row));
-					flags.remove(flagName);
-					
-					table.clearSelection();	
+					if(row == -1)
+					{
+						JOptionPane.showMessageDialog (null, "You have not selected a row to delete!", "Oops", JOptionPane.INFORMATION_MESSAGE);
+					}
+					else
+					{
+						String flagName = (String) table.getModel().getValueAt(row, 0);
+						model.removeRow(table.convertRowIndexToModel(row));
+						flags.remove(flagName);
+						
+						table.clearSelection();	
+					}
 				}
 			}
 		);
@@ -173,7 +180,7 @@ public class ManageCustomFlags {
 				public void actionPerformed(ActionEvent e) 
 				{
 					JFrame frame = new JFrame();
-					frame.setSize(250,125);
+					frame.setSize(250,150);
 					frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 					frame.setVisible(true);
 					frame.setLocationRelativeTo(null);
@@ -194,6 +201,7 @@ public class ManageCustomFlags {
 					frame.getContentPane().add(lblNameOfFlag, gbc_lblNameOfFlag);
 					
 					JTextField name = new JTextField();
+					name.setFont(new Font("Tahoma", Font.PLAIN, 16));
 					GridBagConstraints gbc_name = new GridBagConstraints();
 					gbc_name.insets = new Insets(10, 0, 5, 10);
 					gbc_name.fill = GridBagConstraints.HORIZONTAL;
@@ -212,6 +220,7 @@ public class ManageCustomFlags {
 					frame.getContentPane().add(lblIfContains, gbc_lblIfContains);
 					
 					JTextField contains = new JTextField();
+					contains.setFont(new Font("Tahoma", Font.PLAIN, 16));
 					GridBagConstraints gbc_contains = new GridBagConstraints();
 					gbc_contains.insets = new Insets(0, 0, 5, 10);
 					gbc_contains.fill = GridBagConstraints.HORIZONTAL;
@@ -236,11 +245,11 @@ public class ManageCustomFlags {
 								String ifContains = contains.getText();
 								if(flags.containsValue(ifContains))
 								{
-									JOptionPane.showMessageDialog (null, "Oops", "There is already a flag that accounts for this!", JOptionPane.INFORMATION_MESSAGE);
+									JOptionPane.showMessageDialog (null, "There is already a flag that accounts for this!", "Oops", JOptionPane.INFORMATION_MESSAGE);
 								}
 								else if(flags.containsKey(customFlag))
 								{
-									JOptionPane.showMessageDialog (null, "Oops", "There is already a flag with that name!", JOptionPane.INFORMATION_MESSAGE);
+									JOptionPane.showMessageDialog (null, "There is already a flag with that name!", "Oops", JOptionPane.INFORMATION_MESSAGE);
 								}
 								else
 								{

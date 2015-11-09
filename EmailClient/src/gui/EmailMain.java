@@ -19,7 +19,6 @@ import javax.swing.JTable;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -35,8 +34,6 @@ import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
-import javax.swing.JRadioButton;
-
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -236,7 +233,6 @@ public class EmailMain {
 		ArrayList<Message> toBeHidden = new ArrayList<Message>();
 		//the arraylist of messages of which we will be checking the flags of
 		ArrayList<Message> messages = new ArrayList<Message>();
-
 		if(selected == true)
 		{
 			//if checkbox was ticked then we shall look at the messages which are not currently being displayed
@@ -315,8 +311,8 @@ public class EmailMain {
 	{
 		//recreate the table with the new input messages
 		mainPanel.remove(1);
-		JTable table = createTable(emails);
-		JScrollPane scrollPane2 = new JScrollPane(table);
+		createTable(emails);
+		JScrollPane scrollPane2 = new JScrollPane(currentTable);
 		mainPanel.add(scrollPane2);
 		mainPanel.revalidate();
 		mainPanel.repaint();	
@@ -335,10 +331,8 @@ public class EmailMain {
 	 * @return
 	 */
 	
-	public JTable constructTable(ArrayList<Message> messages)
+	public void constructTable(ArrayList<Message> messages)
 	{
-		JTable table = null;
-	
 		//create table headings
 		String[] columnNames = {"Date", "Subject", "Custom flags"}; 
 		System.out.println("Looking through messages");
@@ -365,9 +359,9 @@ public class EmailMain {
 		}
 		
 		//create the table using the table headings and input row data
-		table = new JTable(rowData, columnNames);
-		table.setBorder(new EmptyBorder(5, 5, 5, 5));
-		table.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		currentTable = new JTable(rowData, columnNames);
+		currentTable.setBorder(new EmptyBorder(5, 5, 5, 5));
+		currentTable.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		
 		//make the table uneditable
 		model = new DefaultTableModel(rowData, columnNames) {
@@ -377,12 +371,15 @@ public class EmailMain {
 			}
 		};
 		
-		table.setModel(model);
-		
-		return table;
+		currentTable.setModel(model);
 	}
 	
-	public JTable addRows(ArrayList<Message> messages)
+	/**
+	 * Insert new row(s) at the top of the JTable
+	 * @param messages The list of messages to be inserted
+	 */
+	
+	public void addRows(ArrayList<Message> messages)
 	{
 		for(Message message : messages)
 		{
@@ -398,7 +395,6 @@ public class EmailMain {
 				
 			System.out.println("Added an Email");
 		}
-		return currentTable;
 	}
 	
 	/**
@@ -408,26 +404,30 @@ public class EmailMain {
 	 */
 	
 	
-	public JTable addListeners(JTable table, ArrayList<Message> messages)
+	public void addListeners(ArrayList<Message> messages)
 	{
 	
 		//make it so that when a row is clicked, then the email corresponding to the row is opened
-		table.addMouseListener(new MouseAdapter() {
+		currentTable.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e) {
-				JTable table = (JTable) e.getSource();
+				currentTable = (JTable) e.getSource();
 				//find the row that was clicked
-				int row = table.rowAtPoint(e.getPoint());
+				int row = currentTable.rowAtPoint(e.getPoint());
 				//if double clicked
 				if(e.getClickCount() ==2) {
 					//get the email subject of the row that was clicked
-					String messageSubject = (String) table.getModel().getValueAt(row,1);
+					String messageSubject = (String) currentTable.getModel().getValueAt(row,1);
 					System.out.println(messageSubject);
-					Date messageDate = (Date) table.getModel().getValueAt(row,0);
+					Date messageDate = (Date) currentTable.getModel().getValueAt(row,0);
 					System.out.println(messageDate.toString());
 					for(int i = 0; i < messages.size(); i++)
 					{
 						Message current = messages.get(i);
 						try {
+							if(current.getSubject().equals("hey there"))
+							{
+								System.out.println("Added listener");
+							}
 							//find the email which contained the date and subject that was in the table
 							if(current.getSubject().equals(messageSubject) && current.getReceivedDate().equals(messageDate))
 							{
@@ -443,16 +443,13 @@ public class EmailMain {
 					}
 				}
 			}
-		});
-
-		return table;	
+		});	
 	}
 	
-	public JTable createTable(ArrayList<Message> messages)
+	public void createTable(ArrayList<Message> messages)
 	{
-		JTable table = constructTable(messages);
-		table = addListeners(table, messages);
-		return table;
+		constructTable(messages);
+		addListeners(messages);
 	}
 	
 	/**
@@ -575,7 +572,6 @@ public class EmailMain {
 				public void actionPerformed(ActionEvent e) 
 				{
 					//regenerate scrollable JTable
-					mainPanel.remove(1);
 					ArrayList<Message> currentMessages = new ArrayList<Message>();
 					ArrayList<Message> newMessages = new ArrayList<Message>();
 					
@@ -584,40 +580,45 @@ public class EmailMain {
 					
 					if(currentMessages.size()>=1)
 					{
-						System.out.println("2");
-						newMessages = client.getInbox();
-						Collections.reverse(newMessages);
-						for(int i = 0; i < currentMessages.size(); i++)
+						try
 						{
-							newMessages.remove(0);
-						}
-						displayedMessages.addAll(newMessages);
-						for(int i =0; i < newMessages.size();i++)
-						{
-							try {
-								System.out.println(newMessages.get(i).getSubject());
-							} catch (MessagingException e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
+							newMessages = client.getInbox();
+							Collections.reverse(newMessages);
+							for(int i = 0; i < currentMessages.size(); i++)
+							{
+								newMessages.remove(0);
 							}
+							displayedMessages.addAll(newMessages);
+							for(int i =0; i < newMessages.size();i++)
+							{
+								try {
+									System.out.println(newMessages.get(i).getSubject());
+								} catch (MessagingException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+							}
+							addRows(newMessages);
 						}
-						currentTable = addRows(newMessages);
-						currentTable = addListeners(currentTable, newMessages);
+						catch(IndexOutOfBoundsException e1)
+						{
+							newMessages = client.getInbox();
+							createTable(newMessages);
+						}
 					}
 					else
 					{
 						//if there are currently no messages
-						System.out.println("1");
 						newMessages = client.getInbox();
-						currentTable = createTable(newMessages);
+						createTable(newMessages);
 					}
-
-					JScrollPane scrollPane2 = new JScrollPane(currentTable);
-					mainPanel.add(scrollPane2);
-					mainPanel.revalidate();
-					mainPanel.repaint();
+					model.fireTableRowsInserted(0, 0);
+					
 					chckbxRead.setSelected(true);
 					chckbxUnread.setSelected(true);
+					displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), true);	
+					displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), false);	
+				
 					JOptionPane.showMessageDialog(null, "Inbox successfully refreshed!", "Message", JOptionPane.INFORMATION_MESSAGE);
 				}
 				
@@ -710,6 +711,24 @@ public class EmailMain {
 			}
 		);
 		
+		JButton btnResetInbox = new JButton("Reset Inbox");
+		btnResetInbox.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		GridBagConstraints gbc_btnResetInbox = new GridBagConstraints();
+		gbc_btnResetInbox.insets = new Insets(0, 0, 5, 5);
+		gbc_btnResetInbox.gridx = 3;
+		gbc_btnResetInbox.gridy = 2;
+		topPanel.add(btnResetInbox, gbc_btnResetInbox);
+		btnResetInbox.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					ArrayList<Message> newMessages = client.getInbox();
+					reproduceTable(newMessages);			
+				}
+			}
+		);
+		
 		chckbxUnread = new JCheckBox("Unread");
 		GridBagConstraints gbc_chckbxUnread = new GridBagConstraints();
 		gbc_chckbxUnread.anchor = GridBagConstraints.WEST;
@@ -738,7 +757,7 @@ public class EmailMain {
 		//the top panel is now finished
 		
 		//add the scrollable table to the main panel
-		currentTable = createTable(displayedMessages);
+		createTable(displayedMessages);
 		scrollPane = new JScrollPane(currentTable);
 		mainPanel.add(scrollPane);
 	}
