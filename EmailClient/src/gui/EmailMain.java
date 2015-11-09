@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
@@ -47,11 +49,14 @@ public class EmailMain {
 	private JScrollPane scrollPane;
 	private ArrayList<Message> displayedMessages;
 	private ArrayList<Message> hiddenMessages;
+	private HashMap<String, String> flags;
 	private JTextField textField;
 	private EmailClient client;
 	private JPanel mainPanel;
 	private JCheckBox chckbxUnread;
 	private JCheckBox chckbxRead;
+	private DefaultTableModel model;
+	private JTable currentTable;
 	
 	/**
 	 * Create the application.
@@ -69,13 +74,87 @@ public class EmailMain {
 		frmEmailClient.setTitle("Inbox");
 		//make a connection and retrieve the messages
 		client = new EmailClient();
+		hiddenMessages = new ArrayList<Message>();
+		displayedMessages = new ArrayList<Message>();
 		displayedMessages = client.getInbox();
+		flags = new HashMap<String, String>();
 		create();
 		frmEmailClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmEmailClient.pack();
 		frmEmailClient.setVisible(true);
 		frmEmailClient.setSize(720, 480);
 		frmEmailClient.setLocationRelativeTo(null);
+	}
+	
+	public String assignCustomFlags(Message message)
+	{
+		ArrayList<String> customFlags = new ArrayList<String>();
+		
+		Iterator iterator = flags.entrySet().iterator();
+		while(iterator.hasNext())
+		{
+			HashMap.Entry<String, String> pair = (HashMap.Entry<String,String>)iterator.next(); 
+			String flagName = pair.getKey();
+			String ifContains = pair.getValue();
+			boolean match = search(message, ifContains);
+			if(match == true)
+			{
+				customFlags.add(flagName); 
+			}
+		}
+		
+		String containedFlags = "";
+		
+		for(int i = 0; i < customFlags.size(); i++)
+		{
+			if(i ==0)
+			{
+				containedFlags += customFlags.get(i);
+			}
+			else
+			{
+				containedFlags += ", " + customFlags.get(i);
+			}
+		}
+		
+		return containedFlags;
+	}
+	
+	/**
+	 * Searches an individual message for a keyword
+	 * @param current The message
+	 * @param searchterm The keyword
+	 * @return
+	 */
+	
+	public boolean search(Message current, String searchterm)
+	{
+		boolean read = true;
+		boolean match = false;
+		try 
+		{
+			Flags flags = current.getFlags();
+			//decide whether the message should be displayed -- this is based upon whether it has a certain flag and if the checkbox was ticked
+			if(!flags.contains(Flags.Flag.SEEN))
+			{
+				read = false;
+			}
+			if(current.getSubject().toLowerCase().contains((searchterm).toLowerCase()) || getEmailBody(current).toLowerCase().contains(searchterm.toLowerCase()))
+			{
+				match = true;
+				System.out.println("Found a match!");
+			}
+			if(read == false)
+			{
+				current.setFlag(Flags.Flag.SEEN, false);
+			}
+		} 
+		catch (MessagingException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return match;
 	}
 	
 	/**
@@ -85,36 +164,16 @@ public class EmailMain {
 	 * @return
 	 */
 
-	public ArrayList<Message> search(ArrayList<Message> messages, String searchterm)
+	public ArrayList<Message> searchMessages(ArrayList<Message> messages, String searchterm)
 	{
 		ArrayList<Message> found = new ArrayList<Message>();
 		System.out.println("Searching...");
 		for(int i = 0; i < messages.size(); i++)
 		{
 			Message current = messages.get(i);
-			boolean read = true;
-			try 
+			if(search(current, searchterm)==true)
 			{
-				Flags flags = current.getFlags();
-				//decide whether the message should be displayed -- this is based upon whether it has a certain flag and if the checkbox was ticked
-				if(!flags.contains(Flags.Flag.SEEN))
-				{
-					read = false;
-				}
-				if(current.getSubject().toLowerCase().contains((searchterm).toLowerCase()) || getEmailBody(current).toLowerCase().contains(searchterm.toLowerCase()))
-				{
-					found.add(current);
-					System.out.println("Found a match!");
-				}
-				if(read == false)
-				{
-					current.setFlag(Flags.Flag.SEEN, false);
-				}
-			} 
-			catch (MessagingException e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				found.add(current);
 			}
 		}
 		return found;
@@ -159,7 +218,7 @@ public class EmailMain {
 	
 	public void displaySearchedMessages(String searchword)
 	{
-		ArrayList<Message> found = search(displayedMessages, searchword);
+		ArrayList<Message> found = searchMessages(displayedMessages, searchword);
 		found = sort(found);
 		reproduceTable(found);	
 	}
@@ -281,11 +340,11 @@ public class EmailMain {
 		JTable table = null;
 	
 		//create table headings
-		String[] columnNames = {"Date", "Subject"}; 
+		String[] columnNames = {"Date", "Subject", "Custom flags"}; 
 		System.out.println("Looking through messages");
 		
 		//add the data to the rows from the message array
-		Object[][] rowData = new Object[messages.size()][2];
+		Object[][] rowData = new Object[messages.size()][3];
 		int count = 0;
 		for(Message message : messages)
 		{
@@ -293,6 +352,7 @@ public class EmailMain {
 			{
 				rowData[count][0] = message.getReceivedDate();
 				rowData[count][1] = message.getSubject();
+				rowData[count][2] = assignCustomFlags(message);
 			}
 			catch (MessagingException e) 
 			{
@@ -310,7 +370,7 @@ public class EmailMain {
 		table.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		
 		//make the table uneditable
-		DefaultTableModel model = new DefaultTableModel(rowData, columnNames) {
+		model = new DefaultTableModel(rowData, columnNames) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return false;
@@ -322,15 +382,34 @@ public class EmailMain {
 		return table;
 	}
 	
+	public JTable addRows(ArrayList<Message> messages)
+	{
+		for(Message message : messages)
+		{
+			try 
+			{
+				model.insertRow(0,new Object[]{message.getReceivedDate(), message.getSubject(), assignCustomFlags(message)});
+			}
+			catch (MessagingException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+				
+			System.out.println("Added an Email");
+		}
+		return currentTable;
+	}
+	
 	/**
 	 * Adds the listeners to the table rows in the new JTable so that the message row that is clicked causes the message to be displayed in a new frame
 	 * @param messages The messages that are in the table
 	 * @return
 	 */
 	
-	public JTable createTable(ArrayList<Message> messages)
+	
+	public JTable addListeners(JTable table, ArrayList<Message> messages)
 	{
-		JTable table = constructTable(messages);
 	
 		//make it so that when a row is clicked, then the email corresponding to the row is opened
 		table.addMouseListener(new MouseAdapter() {
@@ -367,6 +446,13 @@ public class EmailMain {
 		});
 
 		return table;	
+	}
+	
+	public JTable createTable(ArrayList<Message> messages)
+	{
+		JTable table = constructTable(messages);
+		table = addListeners(table, messages);
+		return table;
 	}
 	
 	/**
@@ -490,13 +576,49 @@ public class EmailMain {
 				{
 					//regenerate scrollable JTable
 					mainPanel.remove(1);
-					displayedMessages = client.getInbox();
-					JTable table2 = createTable(displayedMessages);
-					JScrollPane scrollPane2 = new JScrollPane(table2);
+					ArrayList<Message> currentMessages = new ArrayList<Message>();
+					ArrayList<Message> newMessages = new ArrayList<Message>();
+					
+					currentMessages.addAll(hiddenMessages);
+					currentMessages.addAll(displayedMessages);
+					
+					if(currentMessages.size()>=1)
+					{
+						System.out.println("2");
+						newMessages = client.getInbox();
+						Collections.reverse(newMessages);
+						for(int i = 0; i < currentMessages.size(); i++)
+						{
+							newMessages.remove(0);
+						}
+						displayedMessages.addAll(newMessages);
+						for(int i =0; i < newMessages.size();i++)
+						{
+							try {
+								System.out.println(newMessages.get(i).getSubject());
+							} catch (MessagingException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+						}
+						currentTable = addRows(newMessages);
+						currentTable = addListeners(currentTable, newMessages);
+					}
+					else
+					{
+						//if there are currently no messages
+						System.out.println("1");
+						newMessages = client.getInbox();
+						currentTable = createTable(newMessages);
+					}
+
+					JScrollPane scrollPane2 = new JScrollPane(currentTable);
 					mainPanel.add(scrollPane2);
 					mainPanel.revalidate();
 					mainPanel.repaint();
-					JOptionPane.showMessageDialog(null, "Inbox successfully refreshed!", "Error", JOptionPane.INFORMATION_MESSAGE);
+					chckbxRead.setSelected(true);
+					chckbxUnread.setSelected(true);
+					JOptionPane.showMessageDialog(null, "Inbox successfully refreshed!", "Message", JOptionPane.INFORMATION_MESSAGE);
 				}
 				
 			}
@@ -547,6 +669,23 @@ public class EmailMain {
 		);
 		chckbxOld.setEnabled(false);
 		
+		JButton btnManageCustomFlags = new JButton("Manage Custom Flags");
+		btnManageCustomFlags.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		GridBagConstraints gbc_btnManageCustomFlags = new GridBagConstraints();
+		gbc_btnManageCustomFlags.insets = new Insets(0, 0, 5, 5);
+		gbc_btnManageCustomFlags.gridx = 3;
+		gbc_btnManageCustomFlags.gridy = 1;
+		topPanel.add(btnManageCustomFlags, gbc_btnManageCustomFlags);
+		btnManageCustomFlags.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					ManageCustomFlags manage = new ManageCustomFlags(flags);
+				}
+			}
+		);
+		
 		chckbxRead = new JCheckBox("Read");
 		GridBagConstraints gbc_chckbxRead = new GridBagConstraints();
 		gbc_chckbxRead.anchor = GridBagConstraints.WEST;
@@ -574,7 +713,7 @@ public class EmailMain {
 		chckbxUnread = new JCheckBox("Unread");
 		GridBagConstraints gbc_chckbxUnread = new GridBagConstraints();
 		gbc_chckbxUnread.anchor = GridBagConstraints.WEST;
-		gbc_chckbxUnread.insets = new Insets(0, 0, 5, 5);
+		gbc_chckbxUnread.insets = new Insets(0, 0, 0, 5);
 		gbc_chckbxUnread.gridx = 1;
 		gbc_chckbxUnread.gridy = 3;
 		topPanel.add(chckbxUnread, gbc_chckbxUnread);
@@ -599,8 +738,8 @@ public class EmailMain {
 		//the top panel is now finished
 		
 		//add the scrollable table to the main panel
-		JTable table = createTable(displayedMessages);
-		scrollPane = new JScrollPane(table);
+		currentTable = createTable(displayedMessages);
+		scrollPane = new JScrollPane(currentTable);
 		mainPanel.add(scrollPane);
 	}
 }
