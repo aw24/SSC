@@ -4,11 +4,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 
+import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Store;
+import javax.mail.search.FlagTerm;
 import javax.swing.JOptionPane;
 import javax.swing.JPasswordField;
 
@@ -132,7 +134,7 @@ public class EmailClient
 		Collections.reverse(outputMessages);
 		return outputMessages;
 	}
-	
+		
 	public void close()
 	{
 		try
