@@ -30,7 +30,6 @@ import java.util.Iterator;
 public class ManageCustomFlags {
 
 	private JFrame frmManageCustomFlags;
-	private HashMap<String, String> flags;
 	private JTable table;
 	private JPanel mainPanel;
 
@@ -39,14 +38,12 @@ public class ManageCustomFlags {
 	 */
 	public ManageCustomFlags(HashMap<String, String> customFlags) 
 	{
-		flags = customFlags;
-		initialize();
+		initialize(customFlags);
 	}
 	
 
-	public JTable createTable()
+	public JTable createTable(HashMap<String, String> flags)
 	{
-		System.out.println("Creating table...");
 		//create table headings
 		String[] columnNames = {"Custom Flag", "If contains"}; 
 
@@ -77,17 +74,14 @@ public class ManageCustomFlags {
 		table.setBorder(new EmptyBorder(5, 5, 5, 5));
 		table.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		
-		//make the table uneditable
-		System.out.println("Table created...");
-		
 		return table;
 	}
 	
-	public void reproduceTable()
+	public void reproduceTable(HashMap<String, String> flags)
 	{
-		//recreate the table with the new input messages
+		//recreate the table with the new flags
 		mainPanel.remove(1);
-		JTable table = createTable();
+		JTable table = createTable(flags);
 		JScrollPane scrollPane2 = new JScrollPane(table);
 		mainPanel.add(scrollPane2);
 		mainPanel.revalidate();
@@ -97,7 +91,7 @@ public class ManageCustomFlags {
 	/**
 	 * Initialize the contents of the frame.
 	 */
-	private void initialize() {
+	private void initialize(HashMap<String, String> flags) {
 		frmManageCustomFlags = new JFrame();
 		frmManageCustomFlags.setTitle("Manage Custom Flags");
 		frmManageCustomFlags.setBounds(100, 100, 450, 300);
@@ -254,7 +248,7 @@ public class ManageCustomFlags {
 								else
 								{
 									flags.put(customFlag, ifContains);
-									reproduceTable();
+									reproduceTable(flags);
 									frame.dispose();
 								}
 							}
@@ -283,7 +277,7 @@ public class ManageCustomFlags {
 		
 		
 		
-		table = createTable();
+		table = createTable(flags);
 		JScrollPane scrollPane = new JScrollPane(table);
 		mainPanel.setLayout(new BorderLayout(0, 0));
 		mainPanel.add(buttonPanel, BorderLayout.EAST);

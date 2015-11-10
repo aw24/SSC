@@ -43,12 +43,13 @@ import javax.swing.JCheckBox;
 public class EmailMain {
 
 	private JFrame frmEmailClient;
+	private EmailClient client;
+	private EmailHelper helper;
 	private JScrollPane scrollPane;
 	private ArrayList<Message> displayedMessages;
 	private ArrayList<Message> hiddenMessages;
 	private HashMap<String, String> flags;
 	private JTextField textField;
-	private EmailClient client;
 	private JPanel mainPanel;
 	private JCheckBox chckbxUnread;
 	private JCheckBox chckbxRead;
@@ -60,7 +61,6 @@ public class EmailMain {
 	 */
 	public static void main(String[] args)
 	{
-		//get the messages
 		EmailMain email = new EmailMain();
 	}
 	
@@ -69,13 +69,24 @@ public class EmailMain {
 		//create the main frame
 		frmEmailClient = new JFrame("Email Client");
 		frmEmailClient.setTitle("Inbox");
-		//make a connection and retrieve the messages
+		
+		//create other classes so can access functions
 		client = new EmailClient();
+		helper = new EmailHelper();
+		
+		//initialise arraylist of messages
 		hiddenMessages = new ArrayList<Message>();
 		displayedMessages = new ArrayList<Message>();
+		
+		//make a connection and retrieve the messages
 		displayedMessages = client.getInbox();
+		
+		//initialise hashmap which will contain data about custom flags
 		flags = new HashMap<String, String>();
+		
+		//run main gui
 		create();
+		
 		frmEmailClient.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmEmailClient.pack();
 		frmEmailClient.setVisible(true);
@@ -83,178 +94,78 @@ public class EmailMain {
 		frmEmailClient.setLocationRelativeTo(null);
 	}
 	
-	public String assignCustomFlags(Message message)
+	public void createTable(ArrayList<Message> messages)
 	{
-		ArrayList<String> customFlags = new ArrayList<String>();
-		
-		Iterator iterator = flags.entrySet().iterator();
-		while(iterator.hasNext())
-		{
-			HashMap.Entry<String, String> pair = (HashMap.Entry<String,String>)iterator.next(); 
-			String flagName = pair.getKey();
-			String ifContains = pair.getValue();
-			boolean match = search(message, ifContains);
-			if(match == true)
-			{
-				customFlags.add(flagName); 
-			}
-		}
-		
-		String containedFlags = "";
-		
-		for(int i = 0; i < customFlags.size(); i++)
-		{
-			if(i ==0)
-			{
-				containedFlags += customFlags.get(i);
-			}
-			else
-			{
-				containedFlags += ", " + customFlags.get(i);
-			}
-		}
-		
-		return containedFlags;
+		constructTable(messages);
+		helper.addListeners(currentTable, messages);
 	}
 	
 	/**
-	 * Searches an individual message for a keyword
-	 * @param current The message
-	 * @param searchterm The keyword
+	 * Removes the current JTable and adds the new one
+	 * @param emails The new email list
+	 */
+	
+	public void reproduceTable(ArrayList<Message> emails)
+	{
+		//recreate the table with the new input messages
+		mainPanel.remove(1);
+		createTable(emails);
+		JScrollPane scrollPane2 = new JScrollPane(currentTable);
+		mainPanel.add(scrollPane2);
+		mainPanel.revalidate();
+		mainPanel.repaint();	
+	}
+	
+	
+	/**
+	 * Inserts the values from the messages into the table
+	 * @param messages The list of messages to go into the table
 	 * @return
 	 */
 	
-	public boolean search(Message current, String searchterm)
+	public void constructTable(ArrayList<Message> messages)
 	{
-		boolean read = true;
-		boolean match = false;
-		try 
+		//create table headings
+		String[] columnNames = {"Date", "Subject", "Custom flags"}; 
+		System.out.println("Looking through messages");
+		
+		//add the data to the rows from the message array
+		Object[][] rowData = new Object[messages.size()][3];
+		int count = 0;
+		for(Message message : messages)
 		{
-			Flags flags = current.getFlags();
-			//decide whether the message should be displayed -- this is based upon whether it has a certain flag and if the checkbox was ticked
-			if(!flags.contains(Flags.Flag.SEEN))
+			try 
 			{
-				read = false;
+				rowData[count][0] = message.getReceivedDate();
+				rowData[count][1] = message.getSubject();
+				rowData[count][2] = helper.assignCustomFlags(message, flags);
 			}
-			if(current.getSubject().toLowerCase().contains((searchterm).toLowerCase()) || getEmailBody(current).toLowerCase().contains(searchterm.toLowerCase()))
+			catch (MessagingException e) 
 			{
-				match = true;
-				System.out.println("Found a match!");
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			if(read == false)
-			{
-				current.setFlag(Flags.Flag.SEEN, false);
-			}
-		} 
-		catch (MessagingException e) 
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				
+			System.out.println("Added an Email");
+			count++;
 		}
-		return match;
+		
+		//create the table using the table headings and input row data
+		currentTable = new JTable(rowData, columnNames);
+		currentTable.setBorder(new EmptyBorder(5, 5, 5, 5));
+		currentTable.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		
+		//make the table uneditable
+		model = new DefaultTableModel(rowData, columnNames) {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
+		
+		currentTable.setModel(model);
 	}
 	
-	/**
-	 * Searches message subjects and contents currently in the inbox for a certain keyword that the user defined in the textfield
-	 * @param messages The messages currently in the inbox
-	 * @param searchterm The keyword entered by the user
-	 * @return
-	 */
-
-	public ArrayList<Message> searchMessages(ArrayList<Message> messages, String searchterm)
-	{
-		ArrayList<Message> found = new ArrayList<Message>();
-		System.out.println("Searching...");
-		for(int i = 0; i < messages.size(); i++)
-		{
-			Message current = messages.get(i);
-			if(search(current, searchterm)==true)
-			{
-				found.add(current);
-			}
-		}
-		return found;
-	}
-	
-	/**
-	 * Sort the current inbox so that the most recent message are at the top 
-	 * @param messages The messages currently in the inbox.
-	 * @return
-	 */
-	
-	public ArrayList<Message> sort(ArrayList<Message> messages)
-	{
-		try
-		{
-			if(messages.size() > 1)
-			{
-				for(int i = 0; i < messages.size(); i++)
-				{
-					for(int j = 0; j < messages.size()-1; j++)
-					{
-						if(messages.get(j).getReceivedDate().before(messages.get(j+1).getReceivedDate()))
-						{
-							Collections.swap(messages, j, j+1);
-						}
-					}
-				}
-			}
-		}
-		catch
-		(MessagingException e)
-		{
-			
-		}
-		return messages;
-	}
-	
-	/**
-	 * Gets the body content of the email
-	 * @param current The email of which you want to get the body content of
-	 * @return
-	 */
-	
-	
-	public String getEmailBody(Message current)
-	{
-		//get content of email
-		String content = "";
-		try {
-			if(current.getContentType().contains("TEXT/PLAIN")) 
-			{
-				content = current.getContent().toString();
-			}
-			else 
-			{
-				Multipart multipart = (Multipart) current.getContent();
-				for (int j = 0; j < multipart.getCount(); j++) {
-					BodyPart bodyPart = multipart.getBodyPart(j);
-					//display parts of the email which are text
-					if(bodyPart.getContentType().contains("TEXT/PLAIN")) 
-					{
-						content = bodyPart.getContent().toString();
-					}
-
-				}
-			}
-		} catch (MessagingException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return content;
-	}
-	
-	/**
-	 * Displays the messages that returned a match for the keyword entered by the user
-	 * @param searchword The keyword entered into the textfield by the user
-	 */
-	
-	public void displaySearchedMessages(String searchword)
-	{
-		ArrayList<Message> found = searchMessages(displayedMessages, searchword);
-		found = sort(found);
-		reproduceTable(found);	
-	}
 	
 	/**
 	 * When a checkbox has been ticked, this method calculates which messages should be displayed.
@@ -334,158 +245,61 @@ public class EmailMain {
 			hiddenMessages = toBeLeftOut;
 		}
 
-		toGoInTable = sort(toGoInTable);
+		helper.sort(toGoInTable);
 		reproduceTable(toGoInTable);
 	}
 	
-	public JLabel align(JLabel label)
+	public void refresh()
 	{
-		label.setHorizontalAlignment(SwingConstants.LEFT);
-		return label;
+		//regenerate scrollable JTable
+		ArrayList<Message> currentMessages = new ArrayList<Message>();
+		ArrayList<Message> newMessages = new ArrayList<Message>();
 		
-	}
-	
-	/**
-	 * Inserts the values from the messages into the table
-	 * @param messages The list of messages to go into the table
-	 * @return
-	 */
-	
-	public void constructTable(ArrayList<Message> messages)
-	{
-		//create table headings
-		String[] columnNames = {"Date", "Subject", "Custom flags"}; 
-		System.out.println("Looking through messages");
+		currentMessages.addAll(hiddenMessages);
+		currentMessages.addAll(displayedMessages);
 		
-		//add the data to the rows from the message array
-		Object[][] rowData = new Object[messages.size()][3];
-		int count = 0;
-		for(Message message : messages)
+		if(currentMessages.size()>=1)
 		{
-			try 
+			try
 			{
-				rowData[count][0] = message.getReceivedDate();
-				rowData[count][1] = message.getSubject();
-				rowData[count][2] = assignCustomFlags(message);
-			}
-			catch (MessagingException e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-				
-			System.out.println("Added an Email");
-			count++;
-		}
-		
-		//create the table using the table headings and input row data
-		currentTable = new JTable(rowData, columnNames);
-		currentTable.setBorder(new EmptyBorder(5, 5, 5, 5));
-		currentTable.setFont(new Font("Tahoma", Font.PLAIN, 16));
-		
-		//make the table uneditable
-		model = new DefaultTableModel(rowData, columnNames) {
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			}
-		};
-		
-		currentTable.setModel(model);
-	}
-	
-	/**
-	 * Insert new row(s) at the top of the JTable
-	 * @param messages The list of messages to be inserted
-	 */
-	
-	public void addRows(ArrayList<Message> messages)
-	{
-		for(Message message : messages)
-		{
-			try 
-			{
-				model.insertRow(0,new Object[]{message.getReceivedDate(), message.getSubject(), assignCustomFlags(message)});
-			}
-			catch (MessagingException e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-				
-			System.out.println("Added an Email");
-		}
-	}
-	
-	/**
-	 * Adds the listeners to the table rows in the new JTable so that the message row that is clicked causes the message to be displayed in a new frame
-	 * @param messages The messages that are in the table
-	 * @return
-	 */
-	
-	
-	public void addListeners(ArrayList<Message> messages)
-	{
-	
-		//make it so that when a row is clicked, then the email corresponding to the row is opened
-		currentTable.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent e) {
-				currentTable = (JTable) e.getSource();
-				//find the row that was clicked
-				int row = currentTable.rowAtPoint(e.getPoint());
-				//if double clicked
-				if(e.getClickCount() ==2) {
-					//get the email subject of the row that was clicked
-					String messageSubject = (String) currentTable.getModel().getValueAt(row,1);
-					System.out.println(messageSubject);
-					Date messageDate = (Date) currentTable.getModel().getValueAt(row,0);
-					System.out.println(messageDate.toString());
-					for(int i = 0; i < messages.size(); i++)
-					{
-						Message current = messages.get(i);
-						try {
-							if(current.getSubject().equals("hey there"))
-							{
-								System.out.println("Added listener");
-							}
-							//find the email which contained the date and subject that was in the table
-							if(current.getSubject().equals(messageSubject) && current.getReceivedDate().equals(messageDate))
-							{
-								System.out.println("Found");
-								String content = getEmailBody(current);
-								MessageDisplay display = new MessageDisplay(current.getSubject(), current.getFrom(), current.getRecipients(RecipientType.TO),current.getRecipients(RecipientType.CC), content);
-								break;
-							}
-						} catch (MessagingException e1) {
-							e1.printStackTrace();
-						}
-						
+				newMessages = client.getInbox();
+				Collections.reverse(newMessages);
+				for(int i = 0; i < currentMessages.size(); i++)
+				{
+					newMessages.remove(0);
+				}
+				displayedMessages.addAll(newMessages);
+				for(int i =0; i < newMessages.size();i++)
+				{
+					try {
+						System.out.println(newMessages.get(i).getSubject());
+					} catch (MessagingException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
 				}
+				helper.addRows(model, newMessages, flags);
 			}
-		});	
-	}
+			catch(IndexOutOfBoundsException e1)
+			{
+				newMessages = client.getInbox();
+				createTable(newMessages);
+			}
+		}
+		else
+		{
+			//if there are currently no messages
+			newMessages = client.getInbox();
+			createTable(newMessages);
+		}
+		model.fireTableRowsInserted(0, 0);
+		
+		chckbxRead.setSelected(true);
+		chckbxUnread.setSelected(true);
+		displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), true);	
+		displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), false);	
 	
-	public void createTable(ArrayList<Message> messages)
-	{
-		constructTable(messages);
-		addListeners(messages);
-	}
-	
-	/**
-	 * Removes the current JTable and adds the new one
-	 * @param emails The new email list
-	 */
-	
-	public void reproduceTable(ArrayList<Message> emails)
-	{
-		//recreate the table with the new input messages
-		mainPanel.remove(1);
-		createTable(emails);
-		JScrollPane scrollPane2 = new JScrollPane(currentTable);
-		mainPanel.add(scrollPane2);
-		mainPanel.revalidate();
-		mainPanel.repaint();	
+		JOptionPane.showMessageDialog(null, "Inbox successfully refreshed!", "Message", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 	
@@ -540,7 +354,7 @@ public class EmailMain {
 				@Override
 				public void actionPerformed(ActionEvent e) 
 				{
-					displaySearchedMessages(textField.getText());	
+					reproduceTable(helper.displaySearchedMessages(displayedMessages, textField.getText()));	
 				}
 				
 			}
@@ -574,55 +388,7 @@ public class EmailMain {
 				@Override
 				public void actionPerformed(ActionEvent e) 
 				{
-					//regenerate scrollable JTable
-					ArrayList<Message> currentMessages = new ArrayList<Message>();
-					ArrayList<Message> newMessages = new ArrayList<Message>();
-					
-					currentMessages.addAll(hiddenMessages);
-					currentMessages.addAll(displayedMessages);
-					
-					if(currentMessages.size()>=1)
-					{
-						try
-						{
-							newMessages = client.getInbox();
-							Collections.reverse(newMessages);
-							for(int i = 0; i < currentMessages.size(); i++)
-							{
-								newMessages.remove(0);
-							}
-							displayedMessages.addAll(newMessages);
-							for(int i =0; i < newMessages.size();i++)
-							{
-								try {
-									System.out.println(newMessages.get(i).getSubject());
-								} catch (MessagingException e1) {
-									// TODO Auto-generated catch block
-									e1.printStackTrace();
-								}
-							}
-							addRows(newMessages);
-						}
-						catch(IndexOutOfBoundsException e1)
-						{
-							newMessages = client.getInbox();
-							createTable(newMessages);
-						}
-					}
-					else
-					{
-						//if there are currently no messages
-						newMessages = client.getInbox();
-						createTable(newMessages);
-					}
-					model.fireTableRowsInserted(0, 0);
-					
-					chckbxRead.setSelected(true);
-					chckbxUnread.setSelected(true);
-					displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), true);	
-					displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), false);	
-				
-					JOptionPane.showMessageDialog(null, "Inbox successfully refreshed!", "Message", JOptionPane.INFORMATION_MESSAGE);
+					refresh();
 				}
 				
 			}
@@ -774,12 +540,10 @@ public class EmailMain {
 				}
 			}
 		);
-		
-		
-		
 		//the top panel is now finished
 		
 		//add the scrollable table to the main panel
+		currentTable = new JTable();
 		createTable(displayedMessages);
 		scrollPane = new JScrollPane(currentTable);
 		mainPanel.add(scrollPane);
