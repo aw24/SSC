@@ -209,6 +209,42 @@ public class EmailMain {
 	}
 	
 	/**
+	 * Gets the body content of the email
+	 * @param current The email of which you want to get the body content of
+	 * @return
+	 */
+	
+	
+	public String getEmailBody(Message current)
+	{
+		//get content of email
+		String content = "";
+		try {
+			if(current.getContentType().contains("TEXT/PLAIN")) 
+			{
+				content = current.getContent().toString();
+			}
+			else 
+			{
+				Multipart multipart = (Multipart) current.getContent();
+				for (int j = 0; j < multipart.getCount(); j++) {
+					BodyPart bodyPart = multipart.getBodyPart(j);
+					//display parts of the email which are text
+					if(bodyPart.getContentType().contains("TEXT/PLAIN")) 
+					{
+						content = bodyPart.getContent().toString();
+					}
+
+				}
+			}
+		} catch (MessagingException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return content;
+	}
+	
+	/**
 	 * Displays the messages that returned a match for the keyword entered by the user
 	 * @param searchword The keyword entered into the textfield by the user
 	 */
@@ -300,22 +336,6 @@ public class EmailMain {
 
 		toGoInTable = sort(toGoInTable);
 		reproduceTable(toGoInTable);
-	}
-	
-	/**
-	 * Removes the current JTable and adds the new one
-	 * @param emails The new email list
-	 */
-	
-	public void reproduceTable(ArrayList<Message> emails)
-	{
-		//recreate the table with the new input messages
-		mainPanel.remove(1);
-		createTable(emails);
-		JScrollPane scrollPane2 = new JScrollPane(currentTable);
-		mainPanel.add(scrollPane2);
-		mainPanel.revalidate();
-		mainPanel.repaint();	
 	}
 	
 	public JLabel align(JLabel label)
@@ -453,38 +473,21 @@ public class EmailMain {
 	}
 	
 	/**
-	 * Gets the body content of the email
-	 * @param current The email of which you want to get the body content of
-	 * @return
+	 * Removes the current JTable and adds the new one
+	 * @param emails The new email list
 	 */
-	public String getEmailBody(Message current)
+	
+	public void reproduceTable(ArrayList<Message> emails)
 	{
-		//get content of email
-		String content = "";
-		try {
-			if(current.getContentType().contains("TEXT/PLAIN")) 
-			{
-				content = current.getContent().toString();
-			}
-			else 
-			{
-				Multipart multipart = (Multipart) current.getContent();
-				for (int j = 0; j < multipart.getCount(); j++) {
-					BodyPart bodyPart = multipart.getBodyPart(j);
-					//display parts of the email which are text
-					if(bodyPart.getContentType().contains("TEXT/PLAIN")) 
-					{
-						content = bodyPart.getContent().toString();
-					}
-
-				}
-			}
-		} catch (MessagingException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return content;
+		//recreate the table with the new input messages
+		mainPanel.remove(1);
+		createTable(emails);
+		JScrollPane scrollPane2 = new JScrollPane(currentTable);
+		mainPanel.add(scrollPane2);
+		mainPanel.revalidate();
+		mainPanel.repaint();	
 	}
+	
 	
 	/**
 	 * Actually creates the GUI
@@ -752,6 +755,26 @@ public class EmailMain {
 				}
 			}
 		);
+		
+		JButton btnExit = new JButton("Exit");
+		btnExit.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		GridBagConstraints gbc_btnExit = new GridBagConstraints();
+		gbc_btnExit.insets = new Insets(0, 0, 10, 0);
+		gbc_btnExit.gridx = 3;
+		gbc_btnExit.gridy = 3;
+		topPanel.add(btnExit, gbc_btnExit);
+		btnExit.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					frmEmailClient.dispose();
+					client.close();
+					System.exit(0);
+				}
+			}
+		);
+		
 		
 		
 		//the top panel is now finished
