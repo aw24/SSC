@@ -96,7 +96,9 @@ public class EmailMain {
 	
 	public void createTable(ArrayList<Message> messages)
 	{
+		//constructs the actual JTable
 		constructTable(messages);
+		//adds the listeners to each row
 		helper.addListeners(currentTable, messages);
 	}
 	
@@ -120,14 +122,13 @@ public class EmailMain {
 	/**
 	 * Inserts the values from the messages into the table
 	 * @param messages The list of messages to go into the table
-	 * @return
 	 */
 	
 	public void constructTable(ArrayList<Message> messages)
 	{
 		//create table headings
 		String[] columnNames = {"Date", "Subject", "Custom flags"}; 
-		System.out.println("Looking through messages");
+		System.out.println("Looking through messages...");
 		
 		//add the data to the rows from the message array
 		Object[][] rowData = new Object[messages.size()][3];
@@ -145,8 +146,6 @@ public class EmailMain {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-				
-			System.out.println("Added an Email");
 			count++;
 		}
 		
@@ -162,7 +161,7 @@ public class EmailMain {
 				return false;
 			}
 		};
-		
+		System.out.println("Finished.");
 		currentTable.setModel(model);
 	}
 	
@@ -249,6 +248,10 @@ public class EmailMain {
 		reproduceTable(toGoInTable);
 	}
 	
+	/**
+	 * When the refresh button is pressed, new messages are retrieved.
+	 */
+	
 	public void refresh()
 	{
 		//regenerate scrollable JTable
@@ -258,26 +261,23 @@ public class EmailMain {
 		currentMessages.addAll(hiddenMessages);
 		currentMessages.addAll(displayedMessages);
 		
+		//if there is currently messages in the inbox
 		if(currentMessages.size()>=1)
 		{
 			try
 			{
+				//get the new messages
 				newMessages = client.getInbox();
+				
+				//remove any messages that are already in the inbox
 				Collections.reverse(newMessages);
 				for(int i = 0; i < currentMessages.size(); i++)
 				{
 					newMessages.remove(0);
 				}
+				//add all the remaining messages to the displayed messages array
 				displayedMessages.addAll(newMessages);
-				for(int i =0; i < newMessages.size();i++)
-				{
-					try {
-						System.out.println(newMessages.get(i).getSubject());
-					} catch (MessagingException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
+				//add new rows for the new messages
 				helper.addRows(model, newMessages, flags);
 			}
 			catch(IndexOutOfBoundsException e1)
@@ -294,11 +294,13 @@ public class EmailMain {
 		}
 		model.fireTableRowsInserted(0, 0);
 		
+		//show all inbox messages
 		chckbxRead.setSelected(true);
 		chckbxUnread.setSelected(true);
 		displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), true);	
 		displayMessages(Flags.Flag.SEEN, chckbxRead.isSelected(), false);	
 	
+		//notify user that the refresh has completed successfully
 		JOptionPane.showMessageDialog(null, "Inbox successfully refreshed!", "Message", JOptionPane.INFORMATION_MESSAGE);
 	}
 	

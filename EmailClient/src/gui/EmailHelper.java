@@ -14,12 +14,17 @@ import javax.mail.Flags;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
-import javax.mail.Flags.Flag;
 import javax.mail.Message.RecipientType;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
+
+/**
+ * Class that contains functions to help with modifying the table in the main gui
+ * @author Ashley Wyatt
+ *
+ */
 
 public class EmailHelper 
 {
