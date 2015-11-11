@@ -77,16 +77,12 @@ public class EmailHelper
 					{
 						Message current = messages.get(i);
 						try {
-							if(current.getSubject().equals("hey there"))
-							{
-								System.out.println("Added listener");
-							}
 							//find the email which contained the date and subject that was in the table
 							if(current.getSubject().equals(messageSubject) && current.getReceivedDate().equals(messageDate))
 							{
-								System.out.println("Found");
 								String content = getEmailBody(current);
 								MessageDisplay display = new MessageDisplay(current.getSubject(), current.getFrom(), current.getRecipients(RecipientType.TO),current.getRecipients(RecipientType.CC), content);
+								System.out.println("Added listener to " + messageSubject);
 								break;
 							}
 						} catch (MessagingException e1) {
@@ -149,6 +145,8 @@ public class EmailHelper
 	
 	public boolean search(Message current, String searchterm)
 	{
+		System.out.println("Searching...");
+		
 		boolean read = true;
 		boolean match = false;
 		try 
@@ -174,6 +172,7 @@ public class EmailHelper
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		return match;
 	}
 	

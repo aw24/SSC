@@ -1,6 +1,7 @@
 package gui;
 
 import javax.mail.MessagingException;
+import javax.mail.internet.AddressException;
 import javax.swing.JFrame;
 
 import java.awt.GridBagLayout;
@@ -205,7 +206,7 @@ public class NewMessage {
 				try {
 					SendMessage send = new SendMessage(messageData, files, client);
 					frmNewMessage.dispose();
-				} catch (MessagingException e1) {
+				} catch (MessagingException | NullPointerException e1) {
 					JOptionPane.showMessageDialog(null, "Message failed to send", "Error", JOptionPane.INFORMATION_MESSAGE);
 					e1.printStackTrace();
 				}

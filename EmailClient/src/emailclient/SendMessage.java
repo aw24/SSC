@@ -10,7 +10,6 @@ import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -20,7 +19,7 @@ public class SendMessage
 {
 	private MimeMessage message;
 	
-	public SendMessage(String[] messageData, ArrayList<String> files, EmailClient client) throws AddressException, MessagingException
+	public SendMessage(String[] messageData, ArrayList<String> files, EmailClient client) throws MessagingException, NullPointerException
 	{
 		//get session
 		Session session = client.getSession();
@@ -28,9 +27,9 @@ public class SendMessage
 		//add textual data to the message
 		message = new MimeMessage(session);
 		message.setFrom(new InternetAddress(client.getUserName()));
-		message.setRecipients(Message.RecipientType.TO,
-				InternetAddress.parse(messageData[0]));
 		message.setRecipients(Message.RecipientType.CC,
+				InternetAddress.parse(messageData[0]));
+		message.setRecipients(Message.RecipientType.TO,
 				InternetAddress.parse(messageData[1]));
 		message.setSubject(messageData[2]);
 		

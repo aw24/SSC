@@ -123,7 +123,7 @@ public class EmailClient
 		}
 		catch(MessagingException e)
 		{
-			//DO SOMETHING 
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
 			e.printStackTrace();
 		}
 		
@@ -148,7 +148,7 @@ public class EmailClient
 		}
 		catch(MessagingException e)
 		{
-			//DO SOMETHING
+			JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.INFORMATION_MESSAGE);
 			e.printStackTrace();
 		}
 

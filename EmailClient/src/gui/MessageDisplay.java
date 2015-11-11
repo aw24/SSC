@@ -30,11 +30,13 @@ public class MessageDisplay {
 		{
 			fromText[i] = inputSenders[i].toString();
 		}
+
 		toText = new String[inputRecipients.length];
 		for(int i = 0; i < inputRecipients.length; i++)
 		{
 			toText[i] = inputRecipients[i].toString();
 		}
+
 		if(inputCCers == null)
 		{
 			cc = new String[1];
@@ -161,7 +163,7 @@ public class MessageDisplay {
 		{
 			if(i == 0)
 			{
-				outputTo = cc[i];
+				outputCC = cc[i];
 			}
 			else
 			{

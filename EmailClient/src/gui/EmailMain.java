@@ -279,6 +279,7 @@ public class EmailMain {
 				displayedMessages.addAll(newMessages);
 				//add new rows for the new messages
 				helper.addRows(model, newMessages, flags);
+				helper.addListeners(currentTable, newMessages);
 			}
 			catch(IndexOutOfBoundsException e1)
 			{
@@ -308,6 +309,7 @@ public class EmailMain {
 	/**
 	 * Actually creates the GUI
 	 */
+	
 	private void create()
 	{		
 		mainPanel = new JPanel(new BorderLayout());
@@ -494,8 +496,10 @@ public class EmailMain {
 				@Override
 				public void actionPerformed(ActionEvent e) 
 				{
+					System.out.println("Resetting inbox...");
 					ArrayList<Message> newMessages = client.getInbox();
-					reproduceTable(newMessages);			
+					reproduceTable(newMessages);
+					System.out.println("Inbox refreshed");
 				}
 			}
 		);
