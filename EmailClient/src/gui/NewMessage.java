@@ -33,7 +33,7 @@ public class NewMessage {
 	private JTextField toField;
 	private JTextArea textArea;
 	private EmailClient client;
-	private ArrayList<String> files;
+	private ArrayList<File> files;
 
 	/**
 	 * Create the application.
@@ -41,7 +41,7 @@ public class NewMessage {
 	public NewMessage(EmailClient c) 
 	{
 		client = c;
-		files = new ArrayList<String>();
+		files = new ArrayList<File>();
 		initialize();	
 	}
 
@@ -146,7 +146,7 @@ public class NewMessage {
 					//get the selected file
 					File file = fileChooser.getSelectedFile();
 					//add the path to an arraylist (this arraylist will get passed to the SendMessage class so that the files can actually be attached)
-					files.add(file.getPath());
+					files.add(file);
 					//update label to show which files are attached
 					if(lblAttachedFile.getText().equals(""))
 					{

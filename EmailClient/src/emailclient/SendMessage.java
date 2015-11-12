@@ -1,6 +1,8 @@
 package emailclient;
 
+import java.io.File;
 import java.util.ArrayList;
+
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -19,7 +21,7 @@ public class SendMessage
 {
 	private MimeMessage message;
 	
-	public SendMessage(String[] messageData, ArrayList<String> files, EmailClient client) throws MessagingException, NullPointerException
+	public SendMessage(String[] messageData, ArrayList<File> files, EmailClient client) throws MessagingException, NullPointerException
 	{
 		//get session
 		Session session = client.getSession();
@@ -36,21 +38,17 @@ public class SendMessage
 		BodyPart messageBodyPart = new MimeBodyPart();
 		messageBodyPart.setText(messageData[3]);
 		
-		Multipart multipart = new MimeMultipart();
-		String[] attachments = files.toArray(new String[files.size()]);
+		Multipart multipart = new MimeMultipart("mixed");
 		multipart.addBodyPart(messageBodyPart);
-		messageBodyPart = new MimeBodyPart();
 		
 		//add the file attachments to the multipart
-		for(int i = 0; i < attachments.length; i++)
+		for(int i = 0; i < files.size(); i++)
 		{
-			System.out.println(attachments[i]);
-			DataSource source = new FileDataSource(attachments[i]);
-
+			File attachment = files.get(i);
+			messageBodyPart = new MimeBodyPart();
+			DataSource source = new FileDataSource(attachment);
 	        messageBodyPart.setDataHandler(new DataHandler(source));
-
-	        messageBodyPart.setFileName(attachments[i]);
-
+	        messageBodyPart.setFileName(attachment.getName());
 	        multipart.addBodyPart(messageBodyPart);
 		}
 		

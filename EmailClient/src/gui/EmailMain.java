@@ -31,9 +31,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -54,7 +58,7 @@ public class EmailMain {
 	private JCheckBox chckbxUnread;
 	private JCheckBox chckbxRead;
 	private DefaultTableModel model;
-	private JTable currentTable;
+	private RowTable currentTable;
 	
 	/**
 	 * Create the application.
@@ -147,12 +151,9 @@ public class EmailMain {
 				e.printStackTrace();
 			}
 			count++;
+			//decide whether the message should be displayed -- this is based upon whether it has a certain flag and if the checkbox was ticked
 		}
-		
 		//create the table using the table headings and input row data
-		currentTable = new JTable(rowData, columnNames);
-		currentTable.setBorder(new EmptyBorder(5, 5, 5, 5));
-		currentTable.setFont(new Font("Tahoma", Font.PLAIN, 16));
 		
 		//make the table uneditable
 		model = new DefaultTableModel(rowData, columnNames) {
@@ -162,9 +163,40 @@ public class EmailMain {
 			}
 		};
 		System.out.println("Finished.");
-		currentTable.setModel(model);
+		currentTable = new RowTable(model);
+		currentTable.setBorder(new EmptyBorder(5, 5, 5, 5));
+		currentTable.setFont(new Font("Tahoma", Font.PLAIN, 16));
+		setRowColours(messages);
 	}
 	
+	/**
+	 * Goes through messages and makes row gray if the email has been seen and white if it hasnt.
+	 * @param messages The messages in the inbox
+	 */
+	
+	public void setRowColours(ArrayList<Message> messages)
+	{
+		int count = 0;
+		for(Message message : messages)
+		{
+			Flags flags = null;
+			try {
+				flags = message.getFlags();
+			} catch (MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(flags.contains(Flags.Flag.SEEN))
+			{
+				currentTable.setRowColour(count, Color.LIGHT_GRAY);
+			}
+			else
+			{
+				currentTable.setRowColour(count, Color.WHITE);
+			}
+			count ++;
+		}
+	}
 	
 	/**
 	 * When a checkbox has been ticked, this method calculates which messages should be displayed.
@@ -549,7 +581,6 @@ public class EmailMain {
 		//the top panel is now finished
 		
 		//add the scrollable table to the main panel
-		currentTable = new JTable();
 		createTable(displayedMessages);
 		scrollPane = new JScrollPane(currentTable);
 		mainPanel.add(scrollPane);
