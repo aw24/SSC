@@ -23,11 +23,13 @@ public class FileDownloader
 {
 	private String webpageUrl;
 	private String folderPath;
+	private ArrayList<String> fileTypes;
 	
-	public FileDownloader(String input, String folder)
+	public FileDownloader(String input, String folder, ArrayList<String> files)
 	{
 		webpageUrl = input;
 		folderPath = folder;
+		fileTypes = files;
 	}
 	
 	/**
@@ -51,7 +53,13 @@ public class FileDownloader
 		for(Element image: images)
 		{
 			String source = image.absUrl("src");
-			sources.add(source);
+			for(int i = 0; i < fileTypes.size(); i++)
+			{
+				if(source.contains(fileTypes.get(i)))
+				{
+					sources.add(source);
+				}
+			}
 		}
 		return sources;
 	}

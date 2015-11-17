@@ -20,7 +20,19 @@ public class FDMain
 		System.out.println("Enter the path of the folder in which you would like the images to be saved:");
 		String folder = in.nextLine();
 		
-		FileDownloader downloader = new FileDownloader(url, folder);
+		//How many file types would you like to download?
+		System.out.println("Enter the number of file types to be downloaded:");
+		int count = in.nextInt();
+		
+		ArrayList<String> folderTypes = new ArrayList<String>();
+		for(int i = 0; i < count; i++)
+		{
+			System.out.println("Enter file type:");
+			folderTypes.add(in.nextLine());
+			
+		}
+		
+		FileDownloader downloader = new FileDownloader(url, folder, folderTypes);
 		ArrayList<String> sources = downloader.fetchImageSources();
 		downloader.fillFolder(sources);
 	}
