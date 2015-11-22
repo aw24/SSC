@@ -1,7 +1,9 @@
 package gui;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+
 import javax.swing.JFrame;
 
 import fd.FileDownloader;
@@ -9,9 +11,12 @@ import fd.FileUrls;
 
 import java.awt.BorderLayout;
 
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 
 import java.awt.GridBagLayout;
 
@@ -44,11 +49,18 @@ public class FDMain {
 	 * Launch the application.
 	 */
 	public static void main(String[] args) {
-		try {
-			FDMain window = new FDMain();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			SwingUtilities.invokeLater(new Runnable(){
+				public void run()
+				{
+					try {
+						FDMain window = new FDMain();
+						window.run();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			});
 	}
 		
 
@@ -57,12 +69,14 @@ public class FDMain {
 	 * @throws IOException 
 	 */
 	
-	public FDMain() throws IOException {
-		run();
+	public FDMain() throws IOException 
+	{
+		fileTypes = new ArrayList<String>();
 	}
 	
 
 	
+	@SuppressWarnings("serial")
 	public void constructTable()
 	{
 		//make the table uneditable
@@ -78,8 +92,112 @@ public class FDMain {
 		
 		table = new JTable(model);
 		
-		table.getColumn("Status").setCellRenderer(new ProgressRenderer());
+		table.getColumn("Status").setCellRenderer(new ProgressRenderer(0,100));
 		
+	}
+	
+	public void reconstructTable()
+	{
+		mainPanel.remove(1);
+		constructTable();
+		JScrollPane scrollPane = new JScrollPane(table);
+		mainPanel.add(scrollPane);
+		mainPanel.revalidate();
+		mainPanel.repaint();	
+	}
+	
+	public void addListeners(JButton btnFilter, JButton btnBrowse, JButton btnClearListing, JButton btnGo)
+	{
+		btnFilter.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e)
+				{
+					ExtensionsFilter getExtensions = new ExtensionsFilter();
+					getExtensions.run(fileTypes);
+				}
+			}
+		);
+		
+		btnBrowse.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					//create file chooser
+					JFileChooser fileChooser = new JFileChooser();
+					fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+					int returnValue = fileChooser.showOpenDialog(null);
+					if (returnValue == JFileChooser.APPROVE_OPTION) 
+					{
+						//get the selected file
+						File file = fileChooser.getSelectedFile();
+						String folder = file.getAbsolutePath();
+						locationTF.setText(folder);
+					}
+				}
+			}
+		);
+		
+		btnClearListing.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					reconstructTable();
+				}
+			}
+		);
+
+		btnGo.addActionListener(new ActionListener()
+			{
+				@Override
+				public void actionPerformed(ActionEvent e) 
+				{
+					//get input url
+					String url = urlTF.getText();
+					
+					//get input file location
+					String location = locationTF.getText();
+					
+					//get input number of threads
+					int threads = Integer.parseInt(threadsTF.getText());
+					
+					//get the list of links
+					FileUrls fu = new FileUrls(url, fileTypes);
+		
+					try {
+						sources = fu.fetchImageSources();
+						System.out.println("Got file links! There are " + sources.size());
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+						System.out.println("Error whilst getting file links");
+					}
+					
+					for(int i = 0; i < sources.size(); i++)
+					{
+						System.out.println(sources.get(i));
+					}
+					
+					
+					Runnable download = new Runnable() {
+						public void run()
+						{
+							//actually download the files (whilst updating table)
+							FileDownloader fd = new FileDownloader(model, threads);
+							fd.downloadFiles(location, sources);
+							JOptionPane.showMessageDialog (null, "Downloading Complete", "Message", JOptionPane.INFORMATION_MESSAGE);
+							fd.shutDown();
+						}
+					};
+		
+					Thread worker = new Thread(download);
+					worker.start();
+					
+				}
+			}
+		);
 	}
 
 	/**
@@ -87,7 +205,7 @@ public class FDMain {
 	 * @throws IOException 
 	 */
 	
-	private void run() throws IOException 
+	public void run() throws IOException 
 	{
 		fileTypes = new ArrayList<String>();
 		
@@ -138,13 +256,6 @@ public class FDMain {
 		gbc_lblLocation.gridy = 2;
 		panel.add(lblLocation, gbc_lblLocation);
 		
-		JButton btnBrowse = new JButton("Browse");
-		GridBagConstraints gbc_btnBrowse = new GridBagConstraints();
-		gbc_btnBrowse.insets = new Insets(0, 0, 5, 10);
-		gbc_btnBrowse.gridx = 3;
-		gbc_btnBrowse.gridy = 2;
-		panel.add(btnBrowse, gbc_btnBrowse);
-		
 		JLabel lblNoThreads = new JLabel("No. Threads:");
 		GridBagConstraints gbc_lblNoThreads = new GridBagConstraints();
 		gbc_lblNoThreads.anchor = GridBagConstraints.EAST;
@@ -173,6 +284,21 @@ public class FDMain {
 		panel.add(threadsTF, gbc_threadsTF);
 		threadsTF.setColumns(10);
 		
+		JButton btnBrowse = new JButton("Browse");
+		GridBagConstraints gbc_btnBrowse = new GridBagConstraints();
+		gbc_btnBrowse.insets = new Insets(0, 0, 5, 10);
+		gbc_btnBrowse.gridx = 3;
+		gbc_btnBrowse.gridy = 2;
+		panel.add(btnBrowse, gbc_btnBrowse);
+	
+		
+		JButton btnClearListing = new JButton("Clear Listing");
+		GridBagConstraints gbc_btnClearListing = new GridBagConstraints();
+		gbc_btnClearListing.insets = new Insets(0, 10, 10, 5);
+		gbc_btnClearListing.gridx = 0;
+		gbc_btnClearListing.gridy = 3;
+		panel.add(btnClearListing, gbc_btnClearListing);
+		
 		JButton btnFilter = new JButton("Filter");
 		GridBagConstraints gbc_btnFilter = new GridBagConstraints();
 		gbc_btnFilter.insets = new Insets(0, 10, 10, 5);
@@ -189,67 +315,7 @@ public class FDMain {
 		
 		JScrollPane scrollPane = new JScrollPane(table);
 		mainPanel.add(scrollPane);
-		
-		
-		btnGo.addActionListener(new ActionListener()
-			{
-				@Override
-				public void actionPerformed(ActionEvent e) 
-				{
-					//get input url
-					String url = urlTF.getText();
-					
-					//get input file location
-					String location = locationTF.getText();
-					
-					//get input number of threads
-					int threads = Integer.parseInt(threadsTF.getText());
-					
-					//this is temporary
-					ArrayList<String> fileTypes = new ArrayList<String>();
-					fileTypes.add("jpg");
-					fileTypes.add("html");
-					fileTypes.add("png");
-					fileTypes.add("pdf");
-					fileTypes.add("m");
-					
-					//get the list of links
-					FileUrls fu = new FileUrls(url, fileTypes);
-		
-					try {
-						sources = fu.fetchImageSources();
-						System.out.println("Got file links! There are " + sources.size());
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-						System.out.println("Error whilst getting file links");
-					}
-					
-					for(int i = 0; i < sources.size(); i++)
-					{
-						System.out.println(sources.get(i));
-					}
-					
-					
-					Runnable download = new Runnable() {
-						public void run()
-						{
-							//actually download the files (whilst updating table)
-							FileDownloader fd = new FileDownloader(table, model, threads);
-							fd.downloadFiles(location, sources);
-						}
-					};
-		
-					Thread worker = new Thread(download);
-					worker.start();
-					
-				}
-			}
-		);
-		
-		frame.setVisible(true);		;
-		
-		
+		addListeners(btnFilter, btnBrowse, btnClearListing, btnGo);
+		frame.setVisible(true);
 	}
-
 }

@@ -52,7 +52,17 @@ public class FileUrls
 			System.out.println(source);
 			if(source.indexOf("http://")==-1)
 			{
-				source = webpageUrl + source;
+				if(!source.contains(webpageUrl))
+				{
+					if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator
+					{
+						source = webpageUrl + "/" +  source;
+					}
+					else
+					{
+						source = webpageUrl + source;
+					}
+				}
 			}
 			//add sources of files which are of the specified file type
 			sources.add(source);
@@ -63,7 +73,14 @@ public class FileUrls
 			String source = image.attr("src");
 			if(source.indexOf("http://")==-1)
 			{
-				source = webpageUrl + source;
+				if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator
+				{
+					source = webpageUrl + "/" +  source;
+				}
+				else
+				{
+					source = webpageUrl + source;
+				}
 			}
 			sources.add(source);
 		}

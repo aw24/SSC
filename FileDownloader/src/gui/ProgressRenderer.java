@@ -12,22 +12,24 @@ import javax.swing.table.TableCellRenderer;
  *
  */
 
+@SuppressWarnings("serial")
 public class ProgressRenderer extends JProgressBar implements TableCellRenderer
 {
+	
+	public ProgressRenderer(int i, int j) {
+		super(i, j);
+	}
 
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value,boolean isSelected, boolean hasFocus, int row, int column) 
 	{
-		int progress = 0;
-		if(value instanceof Float)
+		if(value != null)
 		{
-			progress = Math.round(((Float) value) *100f);
+			setString(((JProgressBar) value).getString());
+			setMinimum(((JProgressBar) value).getMinimum());
+			setMaximum(((JProgressBar) value).getMaximum());
+			setValue(((JProgressBar) value).getValue());
 		}
-		else if (value instanceof Integer)
-		{
-			progress = (int) value;
-		}
-		setValue(progress);
 		return this;
 	}
 

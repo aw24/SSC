@@ -8,27 +8,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.ArrayList;
-
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
 
 public class DownloadFile implements Runnable
 {
 	private String fileUrl;
 	private String path;	
-	private String fileName;
-	private JTable table;
-	private int number;
+	private ProgressRenderer progressBar;
+	private DefaultTableModel model;
 	
-	public DownloadFile(String url, String name, String fullPath, JTable inputTable, int num)
+	public DownloadFile(String url, String fullPath, DefaultTableModel tmodel, ProgressRenderer progress)
 	{
 		path = fullPath;
-		fileName = name;
 		fileUrl = url;
-		table = inputTable;
-		number = num;
+		progressBar = progress;
+		model = tmodel;
 	}
 	
 	/**
@@ -50,6 +45,9 @@ public class DownloadFile implements Runnable
 			in = url.openStream();
 			out = new BufferedOutputStream(new FileOutputStream(path));
 			
+			//print current thread
+			System.out.println(Thread.currentThread().getName());
+			
 			//write to file
 			for (int b; (b = in.read()) != -1;) 
 			{
@@ -57,12 +55,12 @@ public class DownloadFile implements Runnable
 				SwingUtilities.invokeLater(new Runnable(){
 					public void run()
 					{
-						ProgressRenderer progressBar = (ProgressRenderer) table.getModel().getValueAt(number, 3);
 						int currentProgress = progressBar.getValue();
 						progressBar.setValue(currentProgress + 1);
-						table.getModel().setValueAt(progressBar, number, 3);
-						table.repaint();
-						table.revalidate();
+						progressBar.setString("Downloading...");
+						progressBar.repaint();
+						progressBar.revalidate();
+						model.fireTableDataChanged();
 					}
 				});
 			}
@@ -71,7 +69,10 @@ public class DownloadFile implements Runnable
 		catch(IOException e)
 		{
 			System.out.println("Failed to download " + fileUrl);
-			e.printStackTrace();
+			progressBar.setString("Failed");
+			progressBar.repaint();
+			progressBar.revalidate();
+			model.fireTableDataChanged();
 		}
 		finally
 		{
@@ -89,6 +90,10 @@ public class DownloadFile implements Runnable
 			catch(IOException e)
 			{
 				System.out.println("Failed to download " + fileUrl);
+				progressBar.setString("Failed");
+				progressBar.repaint();
+				progressBar.revalidate();
+				model.fireTableDataChanged();
 			}
 		}
 		

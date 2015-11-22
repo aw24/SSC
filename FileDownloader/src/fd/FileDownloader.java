@@ -4,18 +4,12 @@ import gui.ProgressRenderer;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
-import org.jsoup.*;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 /**
  * Gets the HTML from a webpage and parses it for images. These images are then downloaded
@@ -26,20 +20,19 @@ import org.jsoup.select.Elements;
 public class FileDownloader
 {
 	private DefaultTableModel model;
-	private JTable table;
 	private ExecutorService pool;
+	private int i;
 	
-	public FileDownloader(JTable inputTable, DefaultTableModel inputModel, int threads)
+	public FileDownloader(DefaultTableModel inputModel, int threads)
 	{
 		pool = Executors.newFixedThreadPool(threads);
 		model = inputModel;
-		table = inputTable;
 	}
 
 	
 	public void downloadFiles(String folderPath, ArrayList<String> sources)
 	{
-		for(int i = 0; i< sources.size(); i++)
+		for(i = 0; i< sources.size(); i++)
 		{
 			try
 			{
@@ -52,33 +45,44 @@ public class FileDownloader
 				final double sizeKB = Math.round((double)((100*sizeB)/1024))/100;
 				String fileSize = sizeKB + " KB";
 				
+				final ProgressRenderer progress;
+				
+				if(sizeB == 0 || sizeB ==-1)
+				{
+					progress = new ProgressRenderer(0, 100);
+					progress.setStringPainted(true);
+				}
+				else
+				{
+					progress = new ProgressRenderer(0, sizeB);
+					progress.setStringPainted(true);
+				}
+				
 				//get name of file
 				String fileName = getFileName(fileUrl).replaceFirst("[.][^.]+$", "");
 				
 				//get type of file
 				String fileType = fileUrl.substring(fileUrl.lastIndexOf(".")+1);
 				
-				//create progress bar
-				ProgressRenderer progress = new ProgressRenderer();
-				
 				//get full path
-				String fullPath = folderPath + fileName;
+				String fullPath = folderPath + "\\" + fileName + "." + fileType;
+				
 				
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run()
 					{
-						model.addRow(new Object[]{fileName, fileType, fileSize,progress});
+						model.addRow(new Object[]{fileName, fileType, fileSize, progress});
 						model.fireTableDataChanged();
 					}
 				});
 				
-				DownloadFile df = new DownloadFile(fileUrl, fileName, fullPath, table, i);
+				DownloadFile df = new DownloadFile(fileUrl, fullPath, model, progress);
 				pool.submit(df);
 				
 			}
 			catch(IOException e)
 			{
-				e.printStackTrace();
+				System.out.println("Bad URL. Ignored.");
 			}
 		}
 	}
