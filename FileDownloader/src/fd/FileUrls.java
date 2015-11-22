@@ -9,6 +9,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+/**
+ * The class responsible for parsing the HTML and getting the url links. Also takes into account the filter when getting the urls.
+ * @author Ashley Wyatt
+ *
+ */
+
 public class FileUrls 
 {
 	
@@ -29,27 +35,29 @@ public class FileUrls
 	
 	public ArrayList<String> fetchImageSources() throws IOException
 	{
+		//get the html
 		Document doc = Jsoup.connect(webpageUrl).get();
 		
 		//set up regex
 		String fileExtensions = extensionRegex();
 		System.out.println(fileExtensions);
+		
 		//parse html for link elements
 		Elements images = doc.select("img[src~=(?i)\\.(" + fileExtensions + ")]");
 		Elements files = doc.select("a[href~=(?i)\\.(" + fileExtensions + ")]");
-		
-		//get page title
-		//String title = doc.title();
 		
 		//get the urls of the individual images
 		ArrayList<String> sources = new ArrayList<String>();
 		
 		System.out.println(webpageUrl);
 		
+		//for each file url
 		for(Element file: files)
 		{
 			String source = file.attr("href");
 			System.out.println(source);
+			
+			//if it does not contain http then add the file name onto the url
 			if(source.indexOf("http://")==-1)
 			{
 				if(!source.contains(webpageUrl))
@@ -68,9 +76,11 @@ public class FileUrls
 			sources.add(source);
 		}
 		
+		//for each image url
 		for (Element image : images) 
 		{
 			String source = image.attr("src");
+			//if it does not contain http then add the file name onto the url
 			if(source.indexOf("http://")==-1)
 			{
 				if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator
@@ -82,6 +92,7 @@ public class FileUrls
 					source = webpageUrl + source;
 				}
 			}
+			//add sources of files which are of the specified file type
 			sources.add(source);
 		}
 		

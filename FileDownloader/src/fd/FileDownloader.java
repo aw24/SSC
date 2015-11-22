@@ -12,8 +12,8 @@ import javax.swing.table.DefaultTableModel;
 
 
 /**
- * Gets the HTML from a webpage and parses it for images. These images are then downloaded
- * @author User Ashley Wyatt
+ * Iteratively creates a runnable for a url in order to download it into a specific folder
+ * @author Ashley Wyatt
  *
  */
 
@@ -29,6 +29,11 @@ public class FileDownloader
 		model = inputModel;
 	}
 
+	/**
+	 * Iterates through all url and attempts to downloads the files
+	 * @param folderPath The path of the destination folder
+	 * @param sources ArrayList of the urls
+	 */
 	
 	public void downloadFiles(String folderPath, ArrayList<String> sources)
 	{
@@ -45,17 +50,20 @@ public class FileDownloader
 				final double sizeKB = Math.round((double)((100*sizeB)/1024))/100;
 				String fileSize = sizeKB + " KB";
 				
+				//boolean which is passed into DownloadFile so we know whether the size is valid and so if the progress bar should be incremented or not
+				boolean increment = true;
+				
 				final ProgressRenderer progress;
 				
+				//account for unknown or empty files
 				if(sizeB == 0 || sizeB ==-1)
 				{
 					progress = new ProgressRenderer(0, 100);
-					progress.setStringPainted(true);
+					increment = false;
 				}
 				else
 				{
 					progress = new ProgressRenderer(0, sizeB);
-					progress.setStringPainted(true);
 				}
 				
 				//get name of file
@@ -67,7 +75,7 @@ public class FileDownloader
 				//get full path
 				String fullPath = folderPath + "\\" + fileName + "." + fileType;
 				
-				
+				//add the download into the JTable
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run()
 					{
@@ -76,7 +84,8 @@ public class FileDownloader
 					}
 				});
 				
-				DownloadFile df = new DownloadFile(fileUrl, fullPath, model, progress);
+				//write the file
+				DownloadFile df = new DownloadFile(fileUrl, fullPath, model, progress, increment);
 				pool.submit(df);
 				
 			}
@@ -87,6 +96,7 @@ public class FileDownloader
 		}
 	}
 	
+	//shut down the executor service pool
 	public void shutDown()
 	{
 		pool.shutdown();
@@ -103,11 +113,14 @@ public class FileDownloader
 	{
 		String url = input;
 		int index = url.lastIndexOf("/");
+		//if there is a slash at the end then remove it
 		if(index == url.length()-1)
 		{
 			url = url.substring(0, index);
 		}
+		//find the last slash
 		index = url.lastIndexOf("/");
+		//get the bit after the slash and return it
 		url = url.substring(index+1, url.length());
 		return url;
 		

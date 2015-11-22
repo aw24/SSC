@@ -33,6 +33,12 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.table.DefaultTableModel;
 
+/**
+ * The main method class containing the main window gui. All of the action is triggered from this window
+ * @author Ashley Wyatt
+ *
+ */
+
 public class FDMain {
 
 	private JFrame frame;
@@ -48,6 +54,7 @@ public class FDMain {
 	/**
 	 * Launch the application.
 	 */
+	
 	public static void main(String[] args) {
 			SwingUtilities.invokeLater(new Runnable(){
 				public void run()
@@ -71,12 +78,18 @@ public class FDMain {
 	
 	public FDMain() throws IOException 
 	{
+		//add sensible default filter to avoid dodgy links
 		fileTypes = new ArrayList<String>();
+		fileTypes.add("html");
+		fileTypes.add("jpg");
+		fileTypes.add("png");
+		fileTypes.add("pdf");
 	}
 	
+	/**
+	 * Create the initial empty JTable of downloads
+	 */
 
-	
-	@SuppressWarnings("serial")
 	public void constructTable()
 	{
 		//make the table uneditable
@@ -96,6 +109,10 @@ public class FDMain {
 		
 	}
 	
+	/**
+	 * Completely wipe the JTable containing downloads and create a new empty JTable
+	 */
+	
 	public void reconstructTable()
 	{
 		mainPanel.remove(1);
@@ -106,8 +123,17 @@ public class FDMain {
 		mainPanel.repaint();	
 	}
 	
+	/**
+	 * Add listeners to the buttons
+	 * @param btnFilter 
+	 * @param btnBrowse 
+	 * @param btnClearListing
+	 * @param btnGo
+	 */
+	
 	public void addListeners(JButton btnFilter, JButton btnBrowse, JButton btnClearListing, JButton btnGo)
 	{
+		//open the extensions filter class where the allowed extensions can be modified
 		btnFilter.addActionListener(new ActionListener()
 			{
 				@Override
@@ -119,6 +145,7 @@ public class FDMain {
 			}
 		);
 		
+		//Opens up a JFileChooser and lets user to select a file location
 		btnBrowse.addActionListener(new ActionListener()
 			{
 				@Override
@@ -139,6 +166,7 @@ public class FDMain {
 			}
 		);
 		
+		// Resets the JTable
 		btnClearListing.addActionListener(new ActionListener()
 			{
 				@Override
@@ -149,6 +177,7 @@ public class FDMain {
 			}
 		);
 
+		//Proceeds to download the files from the url
 		btnGo.addActionListener(new ActionListener()
 			{
 				@Override
@@ -201,14 +230,12 @@ public class FDMain {
 	}
 
 	/**
-	 * Initialize the contents of the frame.
+	 * Initialize the contents of the frame. Generated mostly by WindowBuilder
 	 * @throws IOException 
 	 */
 	
 	public void run() throws IOException 
-	{
-		fileTypes = new ArrayList<String>();
-		
+	{	
 		frame = new JFrame();
 		frame.setSize(600,400);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

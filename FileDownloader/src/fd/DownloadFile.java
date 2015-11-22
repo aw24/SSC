@@ -2,14 +2,23 @@ package fd;
 
 import gui.ProgressRenderer;
 
+
+import java.awt.Color;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+
+/**
+ * A runnable which is created for each file is that to be written
+ * @author Ashley Wyatt
+ *
+ */
 
 public class DownloadFile implements Runnable
 {
@@ -17,13 +26,15 @@ public class DownloadFile implements Runnable
 	private String path;	
 	private ProgressRenderer progressBar;
 	private DefaultTableModel model;
+	private boolean increment;
 	
-	public DownloadFile(String url, String fullPath, DefaultTableModel tmodel, ProgressRenderer progress)
+	public DownloadFile(String url, String fullPath, DefaultTableModel tmodel, ProgressRenderer progress, boolean increment)
 	{
 		path = fullPath;
 		fileUrl = url;
 		progressBar = progress;
 		model = tmodel;
+		this.increment = increment;
 	}
 	
 	/**
@@ -55,27 +66,41 @@ public class DownloadFile implements Runnable
 				SwingUtilities.invokeLater(new Runnable(){
 					public void run()
 					{
-						int currentProgress = progressBar.getValue();
-						progressBar.setValue(currentProgress + 1);
-						progressBar.setString("Downloading...");
-						progressBar.repaint();
-						progressBar.revalidate();
-						model.fireTableDataChanged();
+						//increments the progress bar after each byte is written
+						if(increment)
+						{
+							int currentProgress = progressBar.getValue();
+							progressBar.setValue(currentProgress + 1);
+							progressBar.repaint();
+							progressBar.revalidate();
+							model.fireTableDataChanged();
+						}
 					}
 				});
 			}
 			
+			//if the file writing is complete then can just set the progress bar to its max value
+			//this is done as a precaution to account for any rounded file sizes that may cause a problem
+			SwingUtilities.invokeLater(new Runnable(){
+				public void run()
+				{
+					progressBar.setValue(progressBar.getMaximum());
+				}
+			});
+			
 		}
 		catch(IOException e)
 		{
+			//if it is a bad link then set the status to 'Failed' and print out which url failed
 			System.out.println("Failed to download " + fileUrl);
-			progressBar.setString("Failed");
+			progressBar.setValue(1);
 			progressBar.repaint();
 			progressBar.revalidate();
 			model.fireTableDataChanged();
 		}
 		finally
 		{
+			//close the streams
 			try
 			{
 				if(in!=null)
@@ -89,11 +114,7 @@ public class DownloadFile implements Runnable
 			}
 			catch(IOException e)
 			{
-				System.out.println("Failed to download " + fileUrl);
-				progressBar.setString("Failed");
-				progressBar.repaint();
-				progressBar.revalidate();
-				model.fireTableDataChanged();
+				System.out.println("Failed to close streams after: " + fileUrl);
 			}
 		}
 		
