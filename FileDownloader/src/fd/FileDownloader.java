@@ -67,10 +67,11 @@ public class FileDownloader
 				}
 				
 				//get name of file
-				String fileName = getFileName(fileUrl).replaceFirst("[.][^.]+$", "");
+				String markRemovedUrl = removeQuestionMark(fileUrl);
+				String fileName = getFileName(markRemovedUrl).replaceFirst("[.][^.]+$", "");
 				
 				//get type of file
-				String fileType = removeQuestionMark(fileUrl.substring(fileUrl.lastIndexOf(".")+1));
+				String fileType = markRemovedUrl.substring(markRemovedUrl.lastIndexOf(".")+1);
 				
 				//get full path
 				String fullPath = folderPath + "\\" + fileName + "." + fileType;
@@ -91,6 +92,7 @@ public class FileDownloader
 			}
 			catch(IOException e)
 			{
+				e.printStackTrace();
 				System.out.println("Bad URL. Ignored.");
 			}
 		}

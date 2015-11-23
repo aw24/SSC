@@ -102,6 +102,8 @@ public class FDMain {
 		fileTypes.add("jpg");
 		fileTypes.add("png");
 		fileTypes.add("pdf");
+		fileTypes.add("mat");
+		fileTypes.add("gif");
 	}
 	
 	/**

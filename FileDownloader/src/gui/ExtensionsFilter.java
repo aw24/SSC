@@ -83,7 +83,7 @@ public class ExtensionsFilter {
 	public void run(ArrayList<String> extensions) 
 	{
 		frame = new JFrame();
-		frame.setSize(300, 160);
+		frame.setSize(300, 180);
 		frame.setLocationRelativeTo(null);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));

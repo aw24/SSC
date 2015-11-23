@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 /**
- * The class responsible for parsing the HTML and getting the url links. Also takes into account the filter when getting the urls.
+ * The class is responsible for parsing the HTML and getting the url links. Also takes into account the filter when getting the urls.
  * @author Ashley Wyatt
  *
  */
@@ -58,20 +58,19 @@ public class FileUrls
 			System.out.println(source);
 			
 			//if it does not contain http then add the file name onto the url
-			if(source.indexOf("http://")==-1)
+
+			if(source.indexOf("http://")==-1 && source.indexOf("https://")==-1)
 			{
-				if(!source.contains(webpageUrl))
+				if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator at from of source or end of webpage then add it
 				{
-					if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator
-					{
-						source = webpageUrl + "/" +  source;
-					}
-					else
-					{
-						source = webpageUrl + source;
-					}
+					source = webpageUrl + "/" +  source;
+				}
+				else
+				{
+					source = webpageUrl + source;
 				}
 			}
+			
 			//add sources of files which are of the specified file type
 			sources.add(source);
 		}
@@ -80,10 +79,11 @@ public class FileUrls
 		for (Element image : images) 
 		{
 			String source = image.attr("src");
+			System.out.println(source);
 			//if it does not contain http then add the file name onto the url
-			if(source.indexOf("http://")==-1)
+			if(source.indexOf("http://")==-1  && source.indexOf("https://")==-1)
 			{
-				if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator
+				if(webpageUrl.charAt(webpageUrl.length()-1) != '/' && source.charAt(0) != '/')//if no separator at from of source or end of webpage then add it
 				{
 					source = webpageUrl + "/" +  source;
 				}
@@ -127,6 +127,5 @@ public class FileUrls
 		}
 		return acc;
 	}
-
 	
 }
