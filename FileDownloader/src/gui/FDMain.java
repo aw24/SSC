@@ -17,6 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 
 import java.awt.GridBagLayout;
 
@@ -56,18 +58,34 @@ public class FDMain {
 	 */
 	
 	public static void main(String[] args) {
-			SwingUtilities.invokeLater(new Runnable(){
-				public void run()
+		try
+		{
+			for(LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
+			{
+				if("Nimbus".equals(info.getName()))
 				{
-					try {
-						FDMain window = new FDMain();
-						window.run();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					UIManager.setLookAndFeel(info.getClassName());
+					break;
 				}
-			});
+			}
+		}
+		catch(Exception e)
+		{
+			System.out.println("Could not change look and feel to nimbus");
+		}
+		
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run()
+			{
+				try {
+					FDMain window = new FDMain();
+					window.run();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 		
 

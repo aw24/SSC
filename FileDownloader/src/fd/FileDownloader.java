@@ -70,7 +70,7 @@ public class FileDownloader
 				String fileName = getFileName(fileUrl).replaceFirst("[.][^.]+$", "");
 				
 				//get type of file
-				String fileType = fileUrl.substring(fileUrl.lastIndexOf(".")+1);
+				String fileType = removeQuestionMark(fileUrl.substring(fileUrl.lastIndexOf(".")+1));
 				
 				//get full path
 				String fullPath = folderPath + "\\" + fileName + "." + fileType;
@@ -124,6 +124,22 @@ public class FileDownloader
 		url = url.substring(index+1, url.length());
 		return url;
 		
+	}
+	
+	/**
+	 * Removes the question mark and anything that follows from extensions
+	 * @param s
+	 * @return The input string but with the things removed
+	 */
+	
+	public String removeQuestionMark(String s)
+	{
+		int index = s.lastIndexOf("?");
+		if(index != -1)
+		{
+			s = s.substring(0, index);
+		}
+		return s;
 	}
 
 }
