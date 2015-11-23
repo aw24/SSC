@@ -60,6 +60,7 @@ public class FDMain {
 	public static void main(String[] args) {
 		try
 		{
+			//attempt to change the look and feel to 'Nimbus'
 			for(LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
 			{
 				if("Nimbus".equals(info.getName()))
@@ -74,26 +75,23 @@ public class FDMain {
 			System.out.println("Could not change look and feel to nimbus");
 		}
 		
+		//create the main gui
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run()
 			{
-				try {
+				try 
+				{
 					FDMain window = new FDMain();
 					window.run();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
+				} 
+				catch (IOException e) 
+				{
 					e.printStackTrace();
 				}
 			}
 		});
 	}
 		
-
-	/**
-	 * Create the application.
-	 * @throws IOException 
-	 */
-	
 	public FDMain() throws IOException 
 	{
 		//add sensible default filter to avoid dodgy links
@@ -125,6 +123,7 @@ public class FDMain {
 		
 		table = new JTable(model);
 		
+		//tell the table how to render progress bars
 		table.getColumn("Status").setCellRenderer(new ProgressRenderer(0,100));
 		
 	}
@@ -135,9 +134,13 @@ public class FDMain {
 	
 	public void reconstructTable()
 	{
+		//removes scrollpane from main panel
 		mainPanel.remove(1);
+		//create the new table
 		constructTable();
+		//add the new table to a new scrollpane
 		JScrollPane scrollPane = new JScrollPane(table);
+		//add the scrollpane to the main panel
 		mainPanel.add(scrollPane);
 		mainPanel.revalidate();
 		mainPanel.repaint();	
@@ -212,24 +215,25 @@ public class FDMain {
 					//get input number of threads
 					int threads = Integer.parseInt(threadsTF.getText());
 					
-					//get the list of links
 					FileUrls fu = new FileUrls(url, fileTypes);
-		
-					try {
+					try 
+					{
+						//get the file urls
 						sources = fu.fetchImageSources();
 						System.out.println("Got file links! There are " + sources.size());
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
+					} 
+					catch (IOException e1) 
+					{
 						e1.printStackTrace();
 						System.out.println("Error whilst getting file links");
 					}
 					
+					//just printing the sources for debug purposes
 					for(int i = 0; i < sources.size(); i++)
 					{
 						System.out.println(sources.get(i));
 					}
-					
-					
+
 					Runnable download = new Runnable() {
 						public void run()
 						{

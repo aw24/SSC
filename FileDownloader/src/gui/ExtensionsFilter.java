@@ -29,12 +29,24 @@ import javax.swing.JButton;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
+/**
+ * Creates the GUI for where the allowed extensions are managed
+ * @author Ashley Wyatt
+ *
+ */
+
 public class ExtensionsFilter {
 
 	private JFrame frame;
 	private JTextField textField;
 	private JTable table;
 	private JPanel mainPanel;
+	
+	/**
+	 * Create the table of extensions
+	 * @param extensions The list of allowed extensions
+	 * @return The newly created table
+	 */
 
 	public JTable createTable(ArrayList<String>  extensions)
 	{
@@ -66,12 +78,20 @@ public class ExtensionsFilter {
 		return table;
 	}
 	
+	/**
+	 * Reproduce the table with the new flags
+	 * @param extensions
+	 */
+	
 	public void reproduceTable(ArrayList<String> extensions)
 	{
-		//recreate the table with the new flags
+		//remove the old scrollpane from the main panel
 		mainPanel.remove(1);
+		//create new table
 		JTable table = createTable(extensions);
+		//add it to a new scrollpane
 		JScrollPane scrollPane2 = new JScrollPane(table);
+		//add the new scrollpane to the main panel
 		mainPanel.add(scrollPane2);
 		mainPanel.revalidate();
 		mainPanel.repaint();	
